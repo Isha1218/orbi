@@ -49,6 +49,10 @@ def serve_sim():
     class Handler(http.server.SimpleHTTPRequestHandler):
         extensions_map = {**http.server.SimpleHTTPRequestHandler.extensions_map, ".wasm": "application/wasm"}
 
+        def end_headers(self):  # always serve the latest build, never a stale cached one
+            self.send_header("Cache-Control", "no-store")
+            super().end_headers()
+
         def log_message(self, *args):
             pass
 

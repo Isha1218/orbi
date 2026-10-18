@@ -8,6 +8,7 @@ typedef struct { float r, g, b; } rgb_t;
 
 #define DONE_SECONDS 4.0f   // "done" celebrates, then returns to idle
 #define MORPH_SECONDS 0.3f  // expression change duration
+#define FACE_SCALE 1.2f     // size of the whole face on the ball
 #define AA 0.012f           // edge softness, about one pixel in face units
 #define EYE_HW (0.05f + 0.035f * e.blink)  // eye half-width: widens as it blinks (squash and stretch)
 
@@ -145,8 +146,9 @@ static rgb_t ball(float u, float v, float sy, float cy, float sp, float cp) {
     rgb_t col = {bg, bg, bg * 1.1f};
 
     if (z2 > 0) {
-        float d = features(e.state, x1, y2);
-        if (e.morph < 1) d = features(e.prev, x1, y2) + (d - features(e.prev, x1, y2)) * e.morph;
+        float fx = x1 / FACE_SCALE, fy = y2 / FACE_SCALE;
+        float d = features(e.state, fx, fy) * FACE_SCALE;
+        if (e.morph < 1) d = features(e.prev, fx, fy) * FACE_SCALE + (d - features(e.prev, fx, fy) * FACE_SCALE) * e.morph;
         float lit = smoothstep(AA, -AA, d) + 0.18f * expf(-maxf(d, 0) * 18);  // crisp core + soft bloom
         lit *= 0.5f + 0.5f * z2;  // dimmer as features turn away
         const rgb_t white = {0.96f, 0.97f, 1.0f};

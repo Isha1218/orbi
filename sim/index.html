@@ -22,11 +22,21 @@
   <button data-state="error">error</button>
 </div>
 <div id="status">daemon: connecting…</div>
-<script src="build/sphere.js"></script>
 <script>
 const SIZE = 240;
 
-createSphere().then((M) => {
+// Load the build under a fresh address every time, so the browser never reuses a stale copy.
+function loadSphere() {
+  const v = Date.now();
+  return new Promise((resolve) => {
+    const tag = document.createElement('script');
+    tag.src = 'build/sphere.js?v=' + v;
+    tag.onload = () => resolve(createSphere({ locateFile: (f) => 'build/' + f + '?v=' + v }));
+    document.head.appendChild(tag);
+  });
+}
+
+loadSphere().then((M) => {
   const fb = M._malloc(SIZE * SIZE * 2);
   const send = (line) => M.ccall('protocol_handle_line', null, ['string'], [line]);
   M._eye_init(Date.now() >>> 0);
