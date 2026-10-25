@@ -108,6 +108,15 @@ async function keepAwake() {
   }
 }
 
+// Binary frames from the daemon are avatar images: 120x120 RGB565 little-endian.
+let avatarPtr = 0;
+function setAvatar(M, data) {
+  if (data.byteLength !== 120 * 120 * 2) return;
+  if (!avatarPtr) avatarPtr = M._malloc(data.byteLength);
+  M.HEAPU8.set(new Uint8Array(data), avatarPtr);
+  M._eye_set_avatar(avatarPtr);
+}
+
 function connect(M) {
   ws = new WebSocket('wss://' + location.host + '/ws');
   ws.binaryType = 'arraybuffer';
@@ -117,7 +126,10 @@ function connect(M) {
     status.style.opacity = 0;
   };
   ws.onmessage = (ev) => {
-    if (typeof ev.data !== 'string') return;
+    if (typeof ev.data !== 'string') {
+      setAvatar(M, ev.data);
+      return;
+    }
     for (const line of ev.data.split('\n')) {
       if (!line) continue;
       if (line.includes('"t":"listening"')) listening = line.includes('"on":true');
