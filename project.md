@@ -53,9 +53,9 @@ python tools/panel_demo.py   # preview the screen panel
 ```
 - Your own plugins: drop a `.py` file in `~/.orbi/plugins/` (see `docs/plugins.md`).
 - macOS permissions for your terminal: Input Monitoring + Accessibility (push-to-talk).
-- Hermes: installed at `~/.hermes`; `~/.hermes/config.yaml` has `mcp_servers.orbi.url: http://127.0.0.1:8766/mcp`. Needs a model provider (`hermes model` / `hermes setup`).
+- Hermes: installed at `~/.hermes`; `~/.hermes/config.yaml` has `mcp_servers.orbi.url: http://127.0.0.1:8766/mcp`. Model: free Gemini `gemini-flash-lite-latest` (provider `gemini`, key in `~/.hermes/.env`); title generation off to save quota. Full Flash's free tier (20 req/day) is too small for Hermes (3–10 calls/turn).
 
 ## Status
-- Phase 1 (phone sphere) + Phase 2 (agents) + Phase 3 (plugin API, weather + email plugins) built; 52 tests pass. Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk) or with a real Hermes model.
+- Phase 1 (phone sphere) + Phase 2 (agents) + Phase 3 (plugin API, weather + email plugins) built; 52 tests pass. Verified with real Hermes: weather → face scene (~12 s), regex → screen panel + code card (~13 s). Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk).
 - Next: Phase 4 ESP32 glue (perf: ~1.2 ms/frame on M2, expect 5–15 fps on the S3 without optimization).
 - Open: label font lacks accented letters (é, ü, ñ); doc's "62° · rain 3pm" is 14 chars > 12 limit.
