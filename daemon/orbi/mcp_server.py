@@ -38,7 +38,7 @@ FACE_REACT = f"""Make the face show a pure expression for a moment, with no cont
 expression: one of {", ".join(library.EXPRESSIONS)}."""
 
 
-def build(display):
+def build(display, tools=()):
     server = MCPServer("orbi", instructions=ROUTING)
 
     async def face_show(
@@ -58,6 +58,11 @@ def build(display):
     server.add_tool(face_show, description=FACE_SHOW)
     server.add_tool(screen_show, description=SCREEN_SHOW)
     server.add_tool(face_react, description=FACE_REACT)
+    for name, fn, description in tools:
+        try:
+            server.add_tool(fn, name=name, description=description)
+        except Exception as e:
+            print(f"Plugin tool {name} couldn't be added: {e!r}", flush=True)
     return server
 
 
@@ -66,8 +71,9 @@ class Server(uvicorn.Server):
         return contextlib.nullcontext()  # leave Ctrl-C to the daemon
 
 
-def make(display, port=PORT):
-    """A uvicorn server for the tools; run it with `await server.serve()`, stop it with should_exit."""
-    app = build(display).streamable_http_app(streamable_http_path=PATH, host=HOST)
+def make(display, port=PORT, tools=()):
+    """A uvicorn server for the tools; run it with `await server.serve()`, stop it with should_exit.
+    tools: extra (name, fn, description) from plugins."""
+    app = build(display, tools).streamable_http_app(streamable_http_path=PATH, host=HOST)
     config = uvicorn.Config(app, host=HOST, port=port, log_level="warning", timeout_graceful_shutdown=1)
     return Server(config)

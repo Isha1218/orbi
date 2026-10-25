@@ -18,7 +18,8 @@ phone (wasm firmware) ◄─ wss://<lan-ip>:8765/ws ─► daemon ─► hermes 
 ```
 - Device protocol v1 is documented in `firmware/protocol.h` (JSON lines, `"t"` = command; binary frames for audio up and avatar images down). Built-in names live in `protocol.h` and `daemon/orbi/library.py`; keep them in sync.
 - The sphere does all drawing; the daemon only sends commands. Same firmware on phone and ESP32, so v2 = new glue (LCD, I2S mic, USB serial) + a serial transport in the daemon.
-- Daemon: events → `WorldState` → `current_layer` (conversation > content > needs you > news > busy > idle) picks the one thing the face shows. Personality picks the idle expression.
+- Daemon: events → `WorldState` → `current_layer` (conversation > content > needs you > news > busy > plugin ambient > idle; plugins can also add content and news) picks the one thing the face shows. Personality picks the idle expression.
+- Plugins (built-in + `~/.orbi/plugins/*.py`) load at startup; their tools join the MCP server as `<plugin>_<tool>`.
 - Push-to-talk: hold Right Option. News clears by timeout (10 s), no acknowledge input.
 
 ## Key Files
@@ -35,6 +36,9 @@ phone (wasm firmware) ◄─ wss://<lan-ip>:8765/ws ─► daemon ─► hermes 
 - `daemon/orbi/display.py`, `mcp_server.py`: display tools, face validation → screen fallback, avatars
 - `daemon/orbi/hermes.py`, `agents.py`: Hermes adapter → `agent.*` events; agents + news state
 - `daemon/orbi/panel.py` + `panel.html`: screen panel overlay
+- `daemon/orbi/plugins.py`: plugin API (`define_plugin`, `ctx`), loader, plugin layers (content / news / ambient)
+- `daemon/orbi/plugins_builtin/`: `weather` (Open-Meteo `weather_get_weather`), `email` (`email_show_email`: initials card + summary panel)
+- `docs/plugins.md`: plugin author docs
 - `hardware/shell.py` → `bowl`/`ring` STL+STEP: black printed bowl + 60mm solid acrylic dome; board in a pocket on 3 posts; USB-C side window; mic hole. Face must be rotated in firmware to match how the ball sits
 
 ## How to Run
@@ -47,10 +51,11 @@ phone/build.sh               # rebuild after editing firmware/
 firmware/tools/snap.sh       # render face PNGs
 python tools/panel_demo.py   # preview the screen panel
 ```
+- Your own plugins: drop a `.py` file in `~/.orbi/plugins/` (see `docs/plugins.md`).
 - macOS permissions for your terminal: Input Monitoring + Accessibility (push-to-talk).
 - Hermes: installed at `~/.hermes`; `~/.hermes/config.yaml` has `mcp_servers.orbi.url: http://127.0.0.1:8766/mcp`. Needs a model provider (`hermes model` / `hermes setup`).
 
 ## Status
-- Phase 1 (phone sphere) + Phase 2 (agents) built; 38 tests pass. Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk) or with a real Hermes model.
-- Next: Phase 3 plugin API + example plugins (weather, email); Phase 4 ESP32 glue (perf: ~1.2 ms/frame on M2, expect 5–15 fps on the S3 without optimization).
+- Phase 1 (phone sphere) + Phase 2 (agents) + Phase 3 (plugin API, weather + email plugins) built; 52 tests pass. Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk) or with a real Hermes model.
+- Next: Phase 4 ESP32 glue (perf: ~1.2 ms/frame on M2, expect 5–15 fps on the S3 without optimization).
 - Open: label font lacks accented letters (é, ü, ñ); doc's "62° · rain 3pm" is 14 chars > 12 limit.

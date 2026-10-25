@@ -4,6 +4,8 @@ import random
 import sys
 import time
 
+from . import library
+
 AWAY_SECONDS = 5 * 60     # no keyboard or mouse for this long = you're away
 BORED_SECONDS = 2 * 60    # idle this long and it starts yawning now and then
 NIGHT_START, NIGHT_END = 23, 5
@@ -27,6 +29,7 @@ class Personality:
         self.greet_until = 0
         self.yawn_until = 0
         self.next_yawn = 0
+        self.behaviors = []  # (plugin name, fn) from plugins
 
     def idle_expression(self, now=None, idle=None, hour=None):
         if now is None:
@@ -55,4 +58,16 @@ class Personality:
                 self.next_yawn = now + random.uniform(20, 60)
             if now < self.yawn_until:
                 return "sleepy"
+        return self.plugin_expression(idle, hour)
+
+    def plugin_expression(self, idle, hour):
+        for name, fn in list(self.behaviors):
+            try:
+                expression = fn(idle, hour)
+            except Exception as e:
+                print(f"Plugin {name}: idle behavior failed and was turned off: {e!r}", flush=True)
+                self.behaviors.remove((name, fn))
+                continue
+            if expression in library.EXPRESSIONS:
+                return expression
         return "idle"
