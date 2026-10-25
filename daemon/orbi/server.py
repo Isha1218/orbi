@@ -1,4 +1,5 @@
 """One HTTPS port for everything: serves the phone app and takes device connections on /ws."""
+import asyncio
 import json
 import mimetypes
 from http import HTTPStatus
@@ -9,8 +10,11 @@ from websockets.asyncio.server import serve
 from websockets.datastructures import Headers
 from websockets.http11 import Response
 
-from . import certs
+from . import certs, mcp_server
+from .agents import Agents
 from .daemon import Device
+from .display import Display
+from .hermes import Hermes
 
 PORT = 8765
 APP_DIR = Path(__file__).resolve().parents[2] / "phone"
@@ -56,4 +60,13 @@ async def run(daemon):
     ip = certs.lan_ip()
     async with serve(handle, "0.0.0.0", PORT, ssl=certs.ssl_context(ip), process_request=static_file):
         show_pairing(f"https://{ip}:{PORT}")
-        await daemon.run()
+        display = Display(daemon)
+        Agents(daemon)
+        Hermes(daemon)
+        mcp = mcp_server.make(display)
+        mcp_task = asyncio.ensure_future(mcp.serve())
+        try:
+            await daemon.run()
+        finally:
+            mcp.should_exit = True
+            await mcp_task

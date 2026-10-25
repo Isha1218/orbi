@@ -12,11 +12,13 @@ dependencies = [
     "pynput",
     "pywebview",
     "markdown",
+    "mcp>=2.3",
+    "Pillow",
     "pyobjc-framework-Quartz; sys_platform == 'darwin'",
 ]
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "pytest-asyncio"]
 
 [project.scripts]
 orbi = "orbi.cli:main"
@@ -27,3 +29,6 @@ packages = ["orbi"]
 
 [tool.setuptools.package-data]
 orbi = ["panel.html"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
