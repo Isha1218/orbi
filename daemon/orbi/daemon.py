@@ -2,6 +2,7 @@
 and sends the sphere whatever the highest priority layer says."""
 import asyncio
 import json
+import time
 
 from . import hotkey, mouse, personality, voice
 from .state import WorldState, current_layer
@@ -28,6 +29,7 @@ class Daemon:
         self.handlers = {}
         self.shown = None
         self.last_gaze = None
+        self.glance_until = 0
         self.listening = False
         self.audio = bytearray()
         self.personality = personality.Personality()
@@ -118,13 +120,19 @@ class Daemon:
     async def track_cursor(self, hz=30):
         while True:
             pos = mouse.cursor()
-            if pos:
+            if pos and time.monotonic() >= self.glance_until:
                 cmd = {"t": "gaze", "x": round(pos[0], 3), "y": round(pos[1], 3)}
                 if cmd != self.last_gaze:
                     self.last_gaze = cmd
                     self.broadcast(cmd)
             self.refresh()
             await asyncio.sleep(1 / hz)
+
+    def glance(self, gaze, seconds):
+        """Look somewhere on purpose for a moment, then go back to following the cursor."""
+        self.glance_until = time.monotonic() + seconds
+        self.last_gaze = None
+        self.broadcast(gaze)
 
     def call_soon(self, fn):
         """For other threads (hotkey listener, panel) to run something on the daemon's loop."""
