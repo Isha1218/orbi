@@ -3,7 +3,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-static const char *STATE_NAMES[EYE_STATE_COUNT] = {"idle", "thinking", "done", "error"};
+static const char *EXPR_NAMES[EXPR_COUNT] = {
+    "idle", "listening", "thinking", "busy", "pleased", "worried", "expectant", "confused", "sleepy"
+};
 
 // Minimal parser for our flat messages: returns a pointer to the value after "key":
 static const char *value_of(const char *line, const char *key) {
@@ -25,12 +27,28 @@ static int is_string(const char *val, const char *s) {
 
 void protocol_handle_line(const char *line) {
     const char *t = value_of(line, "t");
-    if (is_string(t, "look")) {
-        const char *x = value_of(line, "x"), *y = value_of(line, "y");
-        if (x && y) eye_look(strtof(x, NULL), strtof(y, NULL));
-    } else if (is_string(t, "state")) {
-        const char *v = value_of(line, "v");
-        for (int i = 0; i < EYE_STATE_COUNT; i++)
-            if (is_string(v, STATE_NAMES[i])) eye_set_state((eye_state_t)i);
+    if (is_string(t, "gaze")) {
+        const char *x = value_of(line, "x");
+        const char *y = value_of(line, "y");
+        if (x && y) {
+            eye_gaze(strtof(x, NULL), strtof(y, NULL));
+        }
+    } else if (is_string(t, "expression")) {
+        const char *name = value_of(line, "name");
+        const char *intensity = value_of(line, "intensity");
+        float k = 1.0f;
+        if (intensity) {
+            k = strtof(intensity, NULL);
+        }
+        for (int i = 0; i < EXPR_COUNT; i++) {
+            if (is_string(name, EXPR_NAMES[i])) {
+                eye_set_expression((expr_t)i, k);
+            }
+        }
+    } else if (is_string(t, "blink")) {
+        eye_blink();
+    } else if (is_string(t, "listening")) {
+        const char *on = value_of(line, "on");
+        eye_set_listening(on && strncmp(on, "true", 4) == 0);
     }
 }

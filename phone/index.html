@@ -1,0 +1,156 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<title>Orbi</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000; overflow: hidden; touch-action: none; }
+  body { display: flex; align-items: center; justify-content: center; font: 14px system-ui; color: #666; }
+  canvas { width: min(90vw, 90vh); height: min(90vw, 90vh); border-radius: 50%; }
+  #status { position: fixed; bottom: 16px; left: 0; right: 0; text-align: center; transition: opacity 1s; }
+  #start { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+           background: rgba(0, 0, 0, 0.6); color: #ddd; font-size: 18px; }
+</style>
+</head>
+<body>
+<canvas id="screen" width="360" height="360"></canvas>
+<div id="status">connecting…</div>
+<div id="start">Tap to wake Orbi</div>
+<script>
+// Device glue for the phone. Everything Orbi draws comes from the firmware (compiled to wasm);
+// this file only does what the ESP32 glue will do: connection, mic, and keeping the screen on.
+const SIZE = 360;
+const AUDIO_RATE = 16000;
+const status = document.getElementById('status');
+
+function loadFirmware() {
+  const v = Date.now();
+  return new Promise((resolve) => {
+    const tag = document.createElement('script');
+    tag.src = 'build/sphere.js?v=' + v;
+    tag.onload = () => resolve(createSphere({ locateFile: (f) => 'build/' + f + '?v=' + v }));
+    document.head.appendChild(tag);
+  });
+}
+
+function startDrawing(M) {
+  const fb = M._malloc(SIZE * SIZE * 2);
+  const ctx = document.getElementById('screen').getContext('2d');
+  const img = ctx.createImageData(SIZE, SIZE);
+  const t0 = performance.now();
+  M._eye_init(Date.now() >>> 0);
+
+  function frame() {
+    M._eye_update(Math.floor(performance.now() - t0) + 1);
+    M._eye_render(fb);
+    const px = M.HEAPU16.subarray(fb / 2, fb / 2 + SIZE * SIZE);
+    const out = img.data;
+    for (let i = 0; i < px.length; i++) {
+      const p = px[i];
+      out[i * 4] = ((p >> 11) & 31) * 255 / 31;
+      out[i * 4 + 1] = ((p >> 5) & 63) * 255 / 63;
+      out[i * 4 + 2] = (p & 31) * 255 / 31;
+      out[i * 4 + 3] = 255;
+    }
+    ctx.putImageData(img, 0, 0);
+    requestAnimationFrame(frame);
+  }
+  frame();
+}
+
+// Mic: always open after the first tap, but frames are only sent while the daemon says we're listening.
+let listening = false;
+let ws = null;
+
+async function startMic() {
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, noiseSuppression: true } });
+  const ac = new AudioContext();
+  const worklet = `
+    class Tap extends AudioWorkletProcessor {
+      process(inputs) {
+        if (inputs[0][0]) this.port.postMessage(inputs[0][0].slice());
+        return true;
+      }
+    }
+    registerProcessor('tap', Tap);`;
+  await ac.audioWorklet.addModule(URL.createObjectURL(new Blob([worklet], { type: 'text/javascript' })));
+  const tap = new AudioWorkletNode(ac, 'tap');
+  ac.createMediaStreamSource(stream).connect(tap);
+
+  const step = ac.sampleRate / AUDIO_RATE;
+  let pos = 0;
+  tap.port.onmessage = (ev) => {
+    const input = ev.data;
+    const out = [];
+    while (pos < input.length) {
+      out.push(Math.max(-1, Math.min(1, input[Math.floor(pos)])) * 32767);
+      pos += step;
+    }
+    pos -= input.length;
+    if (listening && ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(new Int16Array(out).buffer);
+    }
+  };
+  if (ac.state === 'suspended') await ac.resume();
+}
+
+async function keepAwake() {
+  try {
+    await navigator.wakeLock.request('screen');
+  } catch (e) {
+    console.log('wake lock unavailable', e);
+  }
+}
+
+function connect(M) {
+  ws = new WebSocket('wss://' + location.host + '/ws');
+  ws.binaryType = 'arraybuffer';
+  ws.onopen = () => {
+    ws.send(JSON.stringify({ t: 'hello', v: 1, firmware: '0.1', display: SIZE, caps: ['mic'] }));
+    status.textContent = 'connected';
+    status.style.opacity = 0;
+  };
+  ws.onmessage = (ev) => {
+    if (typeof ev.data !== 'string') return;
+    for (const line of ev.data.split('\n')) {
+      if (!line) continue;
+      if (line.includes('"t":"listening"')) listening = line.includes('"on":true');
+      M.ccall('protocol_handle_line', null, ['string'], [line]);
+    }
+  };
+  ws.onclose = () => {
+    listening = false;
+    status.textContent = 'looking for the daemon…';
+    status.style.opacity = 1;
+    setTimeout(() => connect(M), 1000);
+  };
+}
+
+loadFirmware().then((M) => {
+  startDrawing(M);
+  connect(M);
+  const start = document.getElementById('start');
+  start.onclick = async () => {
+    start.remove();
+    document.documentElement.requestFullscreen?.().catch(() => {});
+    keepAwake();
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') keepAwake();
+    });
+    try {
+      await startMic();
+    } catch (e) {
+      status.textContent = 'no mic access: ' + e.message;
+      status.style.opacity = 1;
+    }
+  };
+});
+</script>
+</body>
+</html>

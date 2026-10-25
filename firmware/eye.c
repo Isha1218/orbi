@@ -6,14 +6,15 @@
 
 typedef struct { float r, g, b; } rgb_t;
 
-#define DONE_SECONDS 4.0f   // "done" celebrates, then returns to idle
 #define MORPH_SECONDS 0.3f  // expression change duration
 #define FACE_SCALE 1.2f     // size of the whole face on the ball
 #define AA 0.012f           // edge softness, about one pixel in face units
 #define EYE_HW (0.05f + 0.035f * e.blink)  // eye half-width: widens as it blinks (squash and stretch)
 
 static struct {
-    eye_state_t state, prev;
+    expr_t state, prev;
+    float intensity;
+    int listening;
     uint32_t state_since, now, last, next_blink, blink_start, rng;
     uint32_t moved_at, next_glance;
     float look_x, look_y;   // target from the cursor
@@ -37,18 +38,27 @@ void eye_init(uint32_t seed) {
     e.morph = 1;
 }
 
-void eye_look(float x, float y) {
+void eye_gaze(float x, float y) {
     x = clampf(x, -1, 1), y = clampf(y, -1, 1);
     if (fabsf(x - e.look_x) + fabsf(y - e.look_y) > 0.01f) e.moved_at = e.now;
     e.look_x = x;
     e.look_y = y;
 }
 
-void eye_set_state(eye_state_t s) {
-    if (s >= EYE_STATE_COUNT || s == e.state) return;
+void eye_set_expression(expr_t s, float intensity) {
+    e.intensity = intensity;
+    if (s >= EXPR_COUNT || s == e.state) return;
     e.prev = e.state;
     e.state = s;
     e.state_since = e.now;
+}
+
+void eye_blink(void) {
+    e.next_blink = e.now;
+}
+
+void eye_set_listening(int on) {
+    e.listening = on;
 }
 
 void eye_update(uint32_t now) {
@@ -56,15 +66,14 @@ void eye_update(uint32_t now) {
     e.last = e.now = now;
     float t = now / 1000.0f;
     float age = (now - e.state_since) / 1000.0f;
-    if (e.state == EYE_DONE && age > DONE_SECONDS) eye_set_state(EYE_IDLE);
 
     float tx = e.look_x, ty = e.look_y;
     switch (e.state) {
-    case EYE_THINKING:  // look up, slowly scanning side to side
+    case EXPR_THINKING:  // look up, slowly scanning side to side
         tx = 0.45f * sinf(t * 0.8f);
         ty = -0.55f + 0.05f * sinf(t * 1.3f);
         break;
-    case EYE_ERROR:     // shake
+    case EXPR_WORRIED:     // shake
         tx = 0.35f * sinf(t * 30) * expf(-age * 2); ty = 0;
         break;
     default:            // cursor still for a while: glance around on its own
@@ -112,10 +121,10 @@ static float lid_eye(float x, float y, float cx, float lid_y, float slope) {
     return maxf(d, (lid_y + slope * (x - cx)) - y);
 }
 
-static float features(eye_state_t state, float x, float y) {
+static float features(expr_t state, float x, float y) {
     switch (state) {
-    case EYE_THINKING: return minf(lid_eye(x, y, -0.24f, -0.1f, 0), lid_eye(x, y, 0.24f, -0.02f, 0));      // one lid lower
-    case EYE_DONE: {   // squeezed-shut happy chevrons
+    case EXPR_THINKING: return minf(lid_eye(x, y, -0.24f, -0.1f, 0), lid_eye(x, y, 0.24f, -0.02f, 0));      // one lid lower
+    case EXPR_PLEASED: {   // squeezed-shut happy chevrons
         float d = 1;
         for (int k = -1; k <= 1; k += 2) {
             float cx = 0.24f * k;
@@ -123,7 +132,7 @@ static float features(eye_state_t state, float x, float y) {
         }
         return d;
     }
-    case EYE_ERROR:    return minf(lid_eye(x, y, -0.24f, -0.08f, 0.5f), lid_eye(x, y, 0.24f, -0.08f, -0.5f));  // upset slant
+    case EXPR_WORRIED:    return minf(lid_eye(x, y, -0.24f, -0.08f, 0.5f), lid_eye(x, y, 0.24f, -0.08f, -0.5f));  // upset slant
     default: {         // content: no lid, bottoms curved up by the "cheeks" (smiling eyes)
         float d = minf(lid_eye(x, y, -0.24f, -0.5f, 0), lid_eye(x, y, 0.24f, -0.5f, 0));
         float cheek = minf(len(x + 0.24f, y - 0.29f) - 0.25f, len(x - 0.24f, y - 0.29f) - 0.25f);
