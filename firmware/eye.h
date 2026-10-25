@@ -23,6 +23,7 @@ typedef enum {
     SCENE_SNOW,
     SCENE_SUN,
     SCENE_STORM,
+    SCENE_CLOUD,
     SCENE_CONFETTI,
     SCENE_SPARKLES,
     SCENE_ZZZ,

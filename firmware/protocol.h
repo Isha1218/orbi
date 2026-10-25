@@ -2,8 +2,9 @@
 //
 // Built-in library (keep in sync with daemon/orbi/library.py)
 //   expressions: idle listening thinking busy pleased worried expectant confused sleepy
-//   scenes: rain snow sun storm confetti sparkles zzz
-//   moods (eye shape during a scene): neutral happy grumpy
+//   scenes: rain snow sun storm cloud confetti sparkles zzz
+//     weather (rain snow sun storm cloud) fills the ball with no eyes; the others keep the eyes
+//   moods (eye shape during a non-weather scene): neutral happy grumpy
 //   icons: mail calendar check cross warning clock bell chat code music star heart
 //   labels: one line, at most 12 characters (UTF-8, includes ° · →)
 //

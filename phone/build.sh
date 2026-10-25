@@ -3,7 +3,8 @@
 set -e
 cd "$(dirname "$0")"
 mkdir -p build
-emcc ../firmware/eye.c ../firmware/protocol.c -O2 \
+emcc ../firmware/eye.c ../firmware/protocol.c ../firmware/text.c ../firmware/sprites.c \
+  ../firmware/scenes.c ../firmware/weather.c ../firmware/cards.c -O2 \
   -o build/sphere.js \
   -sMODULARIZE -sEXPORT_NAME=createSphere -sENVIRONMENT=web \
   -sEXPORTED_FUNCTIONS=_eye_init,_eye_update,_eye_render,_eye_set_avatar,_protocol_handle_line,_malloc \

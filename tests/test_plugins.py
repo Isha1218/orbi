@@ -253,6 +253,10 @@ def test_weather_clear_and_storm():
     assert 'scene="sun", mood="happy", label="80° clear"' in weather.summarize("Austin", forecast)
     forecast["current"]["weather_code"] = 95
     assert 'scene="storm", mood="grumpy", label="80° storm"' in weather.summarize("Austin", forecast)
+    forecast["current"]["weather_code"] = 3
+    assert 'scene="cloud", mood="neutral", label="80° cloudy"' in weather.summarize("Austin", forecast)
+    forecast["current"]["weather_code"] = 45
+    assert 'scene="cloud", mood="neutral", label="80° fog"' in weather.summarize("Austin", forecast)
 
 
 async def test_weather_network_failure(monkeypatch):
