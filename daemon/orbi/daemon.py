@@ -3,7 +3,7 @@ and sends the sphere whatever the highest priority layer says."""
 import asyncio
 import json
 
-from . import mouse, personality, voice
+from . import hotkey, mouse, personality, voice
 from .state import WorldState, current_layer
 
 CONFUSED_SECONDS = 1.5
@@ -132,4 +132,5 @@ class Daemon:
 
     async def run(self):
         self.loop = asyncio.get_running_loop()
+        hotkey.start(self)
         await self.track_cursor()
