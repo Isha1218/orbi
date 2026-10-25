@@ -156,6 +156,7 @@ static void draw_cloud(rgb_t *row, const sprite_t *s, float v, int i0, int i1) {
             float nz = sqrtf(sat(1 - dist2 / (pr[k] * pr[k])));
             dome = maxf(dome, 0.7f * nz - 0.7f * pdy[k] / pr[k]);
         }
+        d = maxf(d, (v - s->d) * 0.7f);  // flat base
         float cover = fill(d, soft);
         if (cover <= 0) {
             continue;
@@ -164,7 +165,7 @@ static void draw_cloud(rgb_t *row, const sprite_t *s, float v, int i0, int i1) {
         float nx = (u - s->x) * inv_w;
         float facing = sat(nx * s->ax + ny * s->ay);
         // each puff is a lit dome inside the merged shape
-        float lit = sat(0.1f + 0.55f * height + 0.3f * dome);
+        float lit = sat(0.12f + 0.6f * height + 0.2f * dome);
         rgb_t col = mix(s->color2, s->color, lit);
         float edge = 1 - depth;
         add_color(&col, s->color, s->c * edge * edge * edge * facing);
@@ -233,9 +234,9 @@ static void draw_crystal(rgb_t *row, const sprite_t *s, float v, int i0, int i1)
         d = minf(d, arm_distance(lx * C60 - ly * S60, lx * S60 + ly * C60, s->a));
         d -= s->b;
         float core = fill(d, PX);
-        float glow = 0.35f * halo(maxf(d, 0), s->a * 0.35f);
+        float glow = sat(1 - maxf(d, 0) / (s->a * 0.6f));
         over(&row[i], s->color, core * s->alpha);
-        add_color(&row[i], s->color, glow * s->alpha * 0.4f);
+        add_color(&row[i], s->color, glow * glow * s->alpha * 0.2f);
     }
 }
 
@@ -281,8 +282,8 @@ static void draw_bead(rgb_t *row, const sprite_t *s, float v, int i0, int i1) {
         rgb_t c = mix(row[i], s->color, 0.35f + 0.4f * bottom * bottom);
         c = mix(c, scaled(row[i], 0.45f), edge * 0.7f);
         float spot = len(dx + r * 0.35f, dy + r * 0.4f);
-        float shine = sat(1 - spot / (r * 0.32f));
-        add_color(&c, WHITE, shine * shine * 0.9f);
+        float shine = sat(1 - spot / (r * 0.22f));
+        add_color(&c, WHITE, shine * shine * 0.8f);
         over(&row[i], c, cover * s->alpha);
     }
 }

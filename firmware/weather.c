@@ -66,7 +66,7 @@ static void add_cloud(float cx, float cy, float scale, uint32_t seed, const clou
     }
     s->a = st->soft;
     s->c = st->rim;
-    s->d = cy + 0.28f * scale;
+    s->d = cy + 0.2f * scale;
     s->e = 0.6f * scale;
     s->color = st->lit;
     s->color2 = st->shade;
@@ -238,9 +238,9 @@ static void build_rain(void) {
     rgb_t drop_color = {0.62f, 0.72f, 0.92f};
     const float slant = -0.1f;
 
-    add_cloud_row(6, -0.86f + drop, 1.0f, t * 0.03f, 1, &back);
+    add_cloud_row(5, -0.8f + drop, 1.25f, t * 0.03f, 1, &back);
     add_rain(&far, 0, slant, -0.62f, drop_color);
-    add_cloud_row(4, -0.62f + drop, 0.62f, -t * 0.05f, 2, &front);
+    add_cloud_row(4, -0.56f + drop, 0.8f, -t * 0.05f, 2, &front);
     add_rain(&mid, 1000, slant, -0.5f, drop_color);
     add_rain(&near, 2000, slant, -0.45f, drop_color);
     add_beads(7, rgb(0.7f, 0.78f, 0.92f));
@@ -372,19 +372,19 @@ static void build_storm(void) {
     cloud_style_t back = {{0.2f, 0.2f, 0.3f}, {0.05f, 0.05f, 0.09f}, 0.15f, 0.03f, 1, -2, -8, 0.04f};
     cloud_style_t mid = {{0.3f, 0.3f, 0.42f}, {0.07f, 0.07f, 0.12f}, 0.25f, 0.02f, 1, -2, -8, 0.05f};
     cloud_style_t front = {{0.38f, 0.38f, 0.5f}, {0.06f, 0.06f, 0.1f}, 0.35f, 0.012f, 1, -2, -8, 0.06f};
-    rain_layer_t far = {50, 1.8f, 0.1f, 0.35f * PX, 0.3f, HORIZON + 0.01f, 0.46f, 0.035f};
-    rain_layer_t midr = {32, 2.6f, 0.16f, 0.6f * PX, 0.42f, 0.47f, 0.7f, 0.06f};
-    rain_layer_t near = {14, 3.5f, 0.28f, 1.1f * PX, 0.55f, 0.74f, 0.96f, 0.1f};
+    rain_layer_t far = {55, 1.8f, 0.12f, 0.35f * PX, 0.45f, HORIZON + 0.01f, 0.46f, 0.035f};
+    rain_layer_t midr = {46, 2.6f, 0.18f, 0.7f * PX, 0.55f, 0.47f, 0.7f, 0.06f};
+    rain_layer_t near = {18, 3.5f, 0.32f, 1.3f * PX, 0.7f, 0.74f, 0.96f, 0.1f};
     rgb_t drop_color = {0.6f, 0.65f, 0.85f};
     float slant = -0.32f + 0.08f * sinf(t * 0.9f);
 
-    add_cloud_row(5, -0.9f + drop, 0.95f, t * 0.06f, 11, &back);
+    add_cloud_row(4, -0.85f + drop, 1.3f, t * 0.06f, 11, &back);
     add_rain(&far, 3000, slant, -0.5f, drop_color);
-    add_cloud_row(5, -0.66f + drop, 0.8f, -t * 0.09f, 12, &mid);
+    add_cloud_row(4, -0.62f + drop, 1.0f, -t * 0.09f, 12, &mid);
     if (strike >= 0 && age < 0.45f && hash01(strike * 11 + 5) >= 0.3f) {
         add_bolt(strike, w.flash);
     }
-    add_cloud_row(4, -0.45f + drop, 0.68f, t * 0.12f, 13, &front);
+    add_cloud_row(4, -0.42f + drop, 0.8f, t * 0.12f, 13, &front);
     add_rain(&midr, 4000, slant, -0.35f, drop_color);
     add_rain(&near, 5000, slant, -0.3f, drop_color);
 }
@@ -392,7 +392,7 @@ static void build_storm(void) {
 // --- Snow ---
 
 static float bank_height(float u) {
-    float shape = 0.55f + 0.22f * sinf(u * 2.4f + 0.8f) + 0.12f * sinf(u * 6.1f + 2.1f) + 0.05f * sinf(u * 13 + 1);
+    float shape = 0.8f + 0.22f * sinf(u * 2.4f + 0.8f) + 0.12f * sinf(u * 6.1f + 2.1f) + 0.05f * sinf(u * 13 + 1);
     return 1.0f - w.bank * shape;
 }
 
@@ -429,7 +429,7 @@ static void add_flakes(int count, uint32_t seed, float size0, float size1, float
 }
 
 static void build_snow(void) {
-    w.bank = 0.15f + 0.13f * ease_out(w.t / 5);
+    w.bank = 0.18f + 0.12f * ease_out(w.t / 5);
     for (int i = 0; i < EYE_SIZE; i++) {
         w.ground[i] = bank_height(pixel_u(i));
     }
@@ -451,8 +451,8 @@ static void build_snow(void) {
             sprite_rotate(s, 0.3f);
         }
     }
-    add_flakes(34, 200, 1.8f * PX, 3.4f * PX, 0.12f, 0.17f, 0.04f, 0.85f, 0);
-    add_flakes(7, 300, 0.03f, 0.05f, 0.18f, 0.24f, 0.07f, 0.95f, 1);
+    add_flakes(44, 200, 1.8f * PX, 3.6f * PX, 0.12f, 0.17f, 0.04f, 0.85f, 0);
+    add_flakes(10, 300, 0.035f, 0.065f, 0.16f, 0.24f, 0.07f, 0.95f, 1);
     add_flakes(4, 400, 0.06f, 0.09f, 0.28f, 0.34f, 0.1f, 0.16f, 0);
 }
 
@@ -743,8 +743,12 @@ void weather_draw(rgb_t *row, int j) {
         rgb_t top = {0.03f, 0.06f, 0.16f};
         rgb_t low = {0.24f, 0.3f, 0.47f};
         rgb_t sky = mix(top, low, sat((v + 1) / 1.7f));
+        float dy = v + 0.5f;
         for (int i = i0; i < i1; i++) {
+            // soft cold light from behind the snow clouds
+            float dx = pixel_u(i) - 0.4f;
             buf[i] = sky;
+            add_color(&buf[i], rgb(0.35f, 0.45f, 0.7f), 0.35f / (1 + (dx * dx + dy * dy) * 6));
         }
         break;
     }

@@ -902,7 +902,10 @@ static void animate_icon(void) {
             if (age < 0 || age > 1) {
                 continue;
             }
-            float side = (k % 2) ? 1.0f : -1.0f;
+            float side = -1;
+            if (k % 2 == 1) {
+                side = 1;
+            }
             float x = screen_x(0) + side * (0.18f + 0.3f * age) + 0.04f * sinf(age * 9 + k);
             float y = screen_y(-0.1f) - 0.5f * age;
             float size = 0.05f + 0.015f * hash01(k);
