@@ -25,7 +25,7 @@ orbi = "orbi.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "daemon" }
-packages = ["orbi"]
+packages = ["orbi", "orbi.plugins_builtin"]
 
 [tool.setuptools.package-data]
 orbi = ["panel.html"]

@@ -15,6 +15,7 @@ from .agents import Agents
 from .daemon import Device
 from .display import Display
 from .hermes import Hermes
+from .plugins import Plugins
 
 PORT = 8765
 APP_DIR = Path(__file__).resolve().parents[2] / "phone"
@@ -63,7 +64,9 @@ async def run(daemon):
         display = Display(daemon)
         Agents(daemon)
         Hermes(daemon)
-        mcp = mcp_server.make(display)
+        plugins = Plugins(daemon, display)
+        plugins.load_all()
+        mcp = mcp_server.make(display, tools=plugins.tools)
         mcp_task = asyncio.ensure_future(mcp.serve())
         try:
             await daemon.run()
