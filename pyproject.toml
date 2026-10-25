@@ -1,16 +1,29 @@
 [project]
-name = "mini-sphere"
+name = "orbi"
 version = "0.1.0"
-description = "Daemon and CLI for the desk sphere"
+description = "Daemon for Orbi, the desk sphere"
 requires-python = ">=3.10"
 dependencies = [
     "websockets>=13",
+    "cryptography",
+    "qrcode",
+    "faster-whisper",
+    "numpy",
+    "pynput",
+    "pywebview",
+    "markdown",
     "pyobjc-framework-Quartz; sys_platform == 'darwin'",
 ]
 
+[project.optional-dependencies]
+test = ["pytest"]
+
 [project.scripts]
-minisphere = "sphere.cli:main"
+orbi = "orbi.cli:main"
 
 [tool.setuptools]
 package-dir = { "" = "daemon" }
-packages = ["sphere"]
+packages = ["orbi"]
+
+[tool.setuptools.package-data]
+orbi = ["panel.html"]

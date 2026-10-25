@@ -1,4 +1,4 @@
 .venv/
-sim/build/
+phone/build/
 *.egg-info/
 __pycache__/
