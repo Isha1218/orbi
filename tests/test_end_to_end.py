@@ -6,7 +6,7 @@ import ssl
 
 from websockets.asyncio.client import connect
 
-from orbi import certs, hotkey, mouse, plugins, server
+from orbi import certs, claude_code, hotkey, mouse, plugins, server
 from orbi.daemon import Daemon
 
 FRAME_BYTES = 3200  # 100 ms of audio
@@ -85,6 +85,7 @@ def test_push_to_talk_end_to_end(monkeypatch, tmp_path, weather_pcm):
     monkeypatch.setattr(hotkey, "start", lambda daemon: None)
     monkeypatch.setattr(mouse, "cursor", lambda: None)
     monkeypatch.setattr(plugins, "USER_DIR", tmp_path / "plugins")
+    monkeypatch.setattr(claude_code, "command", lambda text: ["true"])  # never start a real agent
 
     daemon = Daemon()
     monkeypatch.setattr(daemon.personality, "idle_expression", lambda: "idle")

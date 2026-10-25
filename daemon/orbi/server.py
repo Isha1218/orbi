@@ -12,6 +12,7 @@ from websockets.http11 import Response
 
 from . import certs, mcp_server
 from .agents import Agents
+from .claude_code import ClaudeCode
 from .daemon import Device
 from .display import Display
 from .hermes import Hermes
@@ -43,7 +44,7 @@ def show_pairing(url):
     print("Your browser will warn about the certificate once; that's expected (it's your own computer).", flush=True)
 
 
-async def run(daemon):
+async def run(daemon, harness="claude"):
     async def handle(ws):
         device = Device(ws.send)
         try:
@@ -63,7 +64,10 @@ async def run(daemon):
         show_pairing(f"https://{ip}:{PORT}")
         display = Display(daemon)
         Agents(daemon)
-        Hermes(daemon)
+        if harness == "hermes":
+            Hermes(daemon)
+        else:
+            ClaudeCode(daemon)
         plugins = Plugins(daemon, display)
         plugins.load_all()
         mcp = mcp_server.make(display, tools=plugins.tools)

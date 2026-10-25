@@ -10,6 +10,8 @@ CONTEXT = (
 
 
 class Hermes:
+    name = "hermes"
+
     def __init__(self, daemon):
         self.daemon = daemon
         self.count = 0
@@ -26,7 +28,7 @@ class Hermes:
 
     def on_transcript(self, event):
         self.count += 1
-        task = asyncio.ensure_future(self.run(f"hermes-{self.count}", event["text"]))
+        task = asyncio.ensure_future(self.run(f"{self.name}-{self.count}", event["text"]))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
 
