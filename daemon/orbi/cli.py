@@ -1,9 +1,18 @@
 """`orbi run` starts the daemon."""
 import argparse
 import asyncio
+import threading
 
 from . import server
 from .daemon import Daemon
+from .panel import Panel
+
+
+def run_daemon(daemon, panel):
+    try:
+        asyncio.run(server.run(daemon))
+    finally:
+        panel.close()  # if the daemon stops, quit the panel too
 
 
 def main():
@@ -12,8 +21,12 @@ def main():
     sub.add_parser("run", help="start the daemon")
     parser.parse_args()
 
-    daemon = Daemon()
+    panel = Panel()
+    daemon = Daemon(panel=panel)
+    # The panel's window needs the main thread, so the daemon runs beside it
+    thread = threading.Thread(target=run_daemon, args=(daemon, panel), daemon=True)
+    thread.start()
     try:
-        asyncio.run(server.run(daemon))
+        panel.run()
     except KeyboardInterrupt:
         pass

@@ -10,6 +10,8 @@ dependencies = [
     "faster-whisper",
     "numpy",
     "pynput",
+    "pywebview",
+    "markdown",
     "pyobjc-framework-Quartz; sys_platform == 'darwin'",
 ]
 
@@ -22,3 +24,6 @@ orbi = "orbi.cli:main"
 [tool.setuptools]
 package-dir = { "" = "daemon" }
 packages = ["orbi"]
+
+[tool.setuptools.package-data]
+orbi = ["panel.html"]

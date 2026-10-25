@@ -24,6 +24,7 @@ cursor (30 Hz) ─────────────────────�
 - `sim/index.html`, `sim/build.sh`: browser simulator and wasm build
 - `daemon/sphere/hub.py`: WebSocket relay, cursor tracking, serves the sim on :8000
 - `daemon/sphere/cli.py`: `minisphere run`, `minisphere send <state>`
+- `daemon/orbi/panel.py` + `panel.html`: screen panel (pywebview overlay, top-right): transcript toast + Markdown panel with action buttons. Runs on the main thread; the daemon's asyncio server runs on a background thread. `tools/panel_demo.py` shows it off
 - `hardware/shell.py` → `bowl.stl/.step`, `ring.stl/.step`: 60mm ball = black printed bowl + bought solid clear acrylic 60mm dome glued on top (it acts as a lens: the screen looks ~1.5× bigger and fills the glass half); sits tilted in a small ring. Board outline/parts come from Waveshare's STEP model of the 1.85" board. Board drops into a pocket (screen flush with the rim) and rests on 3 posts under its M2 standoffs; USB-C plugs in sideways through a window below the rim; a 1.5mm hole lets sound reach the mic. Face must be rotated in firmware to match how the ball sits
 
 ## How to Run
@@ -34,6 +35,8 @@ python hardware/shell.py     # regenerate printable parts (needs cadquery)
 sim/build.sh                 # rebuild after editing firmware/
 .venv/bin/minisphere run         # then open http://localhost:8000
 .venv/bin/minisphere send done   # idle | thinking | done | error
+python tools/panel_demo.py   # preview the screen panel
+pytest tests
 ```
 
 ## Status
