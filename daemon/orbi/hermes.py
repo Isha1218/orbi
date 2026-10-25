@@ -3,9 +3,15 @@ translated into agent.* events."""
 import asyncio
 
 COMMAND = ["hermes", "chat", "-Q", "-q"]
+CONTEXT = (
+    "The user said this out loud to Orbi, their desk sphere. Show your answer with the orbi tools "
+    "(face_show for glanceable results, screen_show for anything with words), not just text. Request: "
+)
 
 
 class Hermes:
+    name = "hermes"
+
     def __init__(self, daemon):
         self.daemon = daemon
         self.count = 0
@@ -22,7 +28,7 @@ class Hermes:
 
     def on_transcript(self, event):
         self.count += 1
-        task = asyncio.ensure_future(self.run(f"hermes-{self.count}", event["text"]))
+        task = asyncio.ensure_future(self.run(f"{self.name}-{self.count}", event["text"]))
         self.tasks.add(task)
         task.add_done_callback(self.tasks.discard)
 
@@ -31,7 +37,7 @@ class Hermes:
         self.daemon.emit({"type": "agent.started", "id": agent_id, "task": text})
         try:
             proc = await asyncio.create_subprocess_exec(
-                *COMMAND, text,
+                *COMMAND, CONTEXT + text,
                 stdin=asyncio.subprocess.DEVNULL,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

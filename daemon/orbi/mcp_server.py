@@ -1,6 +1,8 @@
 """The sphere's MCP server: gives any MCP-capable agent the face_show, screen_show
 and face_react tools, over streamable HTTP on localhost."""
 import contextlib
+import functools
+import inspect
 
 import uvicorn
 from mcp.server.mcpserver import MCPServer
@@ -38,6 +40,18 @@ FACE_REACT = f"""Make the face show a pure expression for a moment, with no cont
 expression: one of {", ".join(library.EXPRESSIONS)}."""
 
 
+def on_loop(fn):
+    """Plain functions would run on a worker thread; tools must run on the daemon's loop."""
+    if inspect.iscoroutinefunction(fn):
+        return fn
+
+    @functools.wraps(fn)
+    async def wrapper(*args, **kwargs):
+        return fn(*args, **kwargs)
+
+    return wrapper
+
+
 def build(display, tools=()):
     server = MCPServer("orbi", instructions=ROUTING)
 
@@ -49,10 +63,10 @@ def build(display, tools=()):
     ) -> str:
         return await display.face_show(scene, card, mood, label)
 
-    def screen_show(content: str, title: str = "", actions: list[dict[str, str]] | None = None) -> str:
+    async def screen_show(content: str, title: str = "", actions: list[dict[str, str]] | None = None) -> str:
         return display.screen_show(content, title, actions)
 
-    def face_react(expression: str) -> str:
+    async def face_react(expression: str) -> str:
         return display.face_react(expression)
 
     server.add_tool(face_show, description=FACE_SHOW)
@@ -60,7 +74,7 @@ def build(display, tools=()):
     server.add_tool(face_react, description=FACE_REACT)
     for name, fn, description in tools:
         try:
-            server.add_tool(fn, name=name, description=description)
+            server.add_tool(on_loop(fn), name=name, description=description)
         except Exception as e:
             print(f"Plugin tool {name} couldn't be added: {e!r}", flush=True)
     return server
