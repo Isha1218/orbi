@@ -11,7 +11,8 @@ from test_mcp import url  # noqa: F401  (fixture)
 FAKE_HERMES = """#!{python}
 import asyncio, os, sys, time
 assert sys.argv[1:4] == ["chat", "-Q", "-q"], sys.argv
-text = sys.argv[4]
+assert "Orbi" in sys.argv[4], sys.argv
+text = sys.argv[4].split("Request: ")[-1]
 if text == "weather":
     print("Sunny, 62°")
 elif text == "explode":

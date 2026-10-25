@@ -6,6 +6,8 @@ from mcp import Client
 
 from orbi import mcp_server
 
+from conftest import FakeDevice
+
 
 def free_port():
     with socket.socket() as s:
@@ -37,6 +39,7 @@ async def url(daemon):
 
 
 async def test_round_trip(daemon, url):
+    daemon.devices.add(FakeDevice())  # tools must work with a sphere connected
     async with Client(url) as client:
         tools = await client.list_tools()
         names = sorted(t.name for t in tools.tools)
@@ -57,8 +60,10 @@ async def test_round_trip(daemon, url):
         assert daemon.state.face_content["initials"] == "SJ"
 
         actions = [{"label": "Open in Gmail", "url": "https://mail.google.com"}]
-        await client.call_tool("screen_show", {"content": "- Friday 2pm", "title": "Re: Demo", "actions": actions})
+        result = await client.call_tool("screen_show", {"content": "- Friday 2pm", "title": "Re: Demo", "actions": actions})
+        assert not result.is_error
         assert daemon.panel.shown[-1] == {"title": "Re: Demo", "content": "- Friday 2pm", "actions": actions}
 
-        await client.call_tool("face_react", {"expression": "worried"})
+        result = await client.call_tool("face_react", {"expression": "worried"})
+        assert not result.is_error
         assert daemon.state.face_content == {"t": "expression", "name": "worried"}
