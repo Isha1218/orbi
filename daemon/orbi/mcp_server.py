@@ -20,9 +20,9 @@ ROUTING = f"""Orbi is a small glowing face on the user's desk. Where to put your
 
 FACE_SHOW = f"""Show a glanceable result on the face for a few seconds: weather, a status, a number, a sender.
 The face can show exactly one built-in scene OR one simple card, plus an optional one-line label of at most {library.MAX_LABEL} characters. Nothing else.
-- scene: one of {", ".join(library.SCENES)}. The eyes stay visible and react to it.
+- scene: one of {", ".join(library.SCENES)}. Weather scenes ({", ".join(library.WEATHER)}) fill the whole orb with no eyes; the other scenes keep the eyes, which react to them.
 - card: an object with exactly one key: {{"icon": name}} with name one of {", ".join(library.ICONS)}; {{"initials": "SJ"}} (1-3 letters); or {{"avatar": image URL or local file path}}.
-- mood: eye shape during a scene, one of {", ".join(library.MOODS)}.
+- mood: eye shape during a non-weather scene, one of {", ".join(library.MOODS)}. Ignored for weather.
 - label: at most {library.MAX_LABEL} characters, one line, e.g. "Demo → Fri".
 Anything else (longer text, unknown names) is sent to the screen instead.
 

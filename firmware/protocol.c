@@ -9,7 +9,7 @@ static const char *EXPR_NAMES[EXPR_COUNT] = {
     "idle", "listening", "thinking", "busy", "pleased", "worried", "expectant", "confused", "sleepy"
 };
 static const char *SCENE_NAMES[SCENE_COUNT] = {
-    "rain", "snow", "sun", "storm", "confetti", "sparkles", "zzz"
+    "rain", "snow", "sun", "storm", "cloud", "confetti", "sparkles", "zzz"
 };
 static const char *MOOD_NAMES[MOOD_COUNT] = {
     "neutral", "happy", "grumpy"

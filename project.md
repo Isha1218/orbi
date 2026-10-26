@@ -23,7 +23,11 @@ phone (wasm firmware) ◄─ wss://<lan-ip>:8765/ws ─► daemon ─► claude 
 - Push-to-talk: hold Right Option. News clears by timeout (10 s), no acknowledge input.
 
 ## Key Files
-- `firmware/eye.c`: the face. 9 expressions, blinks, listening ring, scenes, glance cards (icon, initials, avatar), labels; renders in row bands (`eye_render_rows`)
+- `firmware/eye.c`: the face. 9 expressions, blinks, listening ring, labels (on a soft dark backing); composites scenes/cards per row band (`eye_render_rows`)
+- `firmware/weather.c`: rain, storm, snow, sun, cloud: full-orb windows into the weather (no eyes), iris open/close
+- `firmware/scenes.c`: scene dispatch + confetti, sparkles, zzz (eyes stay)
+- `firmware/cards.c`: animated illustrated glance cards (12 icons, initials, avatar)
+- `firmware/sprites.c`, `gfx.h`, `text.c`: row-binned sprite engine, shared math/SDF helpers, bitmap text
 - `firmware/protocol.c` / `protocol.h`: protocol parser and spec
 - `firmware/font.h`: bitmap font from `firmware/tools/make_font.py`
 - `firmware/tools/snap.sh`: native harness → PNG frames; `bench N` prints ms/frame
@@ -58,6 +62,7 @@ python tools/panel_demo.py   # preview the screen panel
 - Hermes (optional): installed at `~/.hermes`; `~/.hermes/config.yaml` has `mcp_servers.orbi.url: http://127.0.0.1:8766/mcp`. Model: free Gemini `gemini-flash-lite-latest` (provider `gemini`, key in `~/.hermes/.env`); title generation off to save quota. Full Flash's free tier (20 req/day) is too small for Hermes (3–10 calls/turn).
 
 ## Status
-- Phase 1 (phone sphere) + Phase 2 (agents) + Phase 3 (plugin API, weather + email plugins) built; 52 tests pass. Verified with real Claude Code (Opus 5.5): weather → plugin + face_show (~18 s). Verified with real Hermes: weather → face scene (~12 s), regex → screen panel + code card (~13 s). Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk).
-- Next: Phase 4 ESP32 glue (perf: ~1.2 ms/frame on M2, expect 5–15 fps on the S3 without optimization).
+- Phase 1 (phone sphere) + Phase 2 (agents) + Phase 3 (plugin API, weather + email plugins) built; 56 tests pass. Verified with real Claude Code (Opus 5.5): weather → plugin + face_show (~18 s). Verified with real Hermes: weather → face scene (~12 s), regex → screen panel + code card (~13 s). Not yet verified on a real phone (iOS mic over self-signed HTTPS is the risk).
+- Graphics redo: weather fills the orb (new `cloud` scene; cloudy/fog → cloud), illustrated animated cards. Perf on M2: idle 1.0 ms, scenes/cards 1.2–3.8 ms/frame worst (storm).
+- Next: Phase 4 ESP32 glue (expect roughly 3–10 fps on the S3 for rich scenes without further optimization).
 - Open: label font lacks accented letters (é, ü, ñ); doc's "62° · rain 3pm" is 14 chars > 12 limit.

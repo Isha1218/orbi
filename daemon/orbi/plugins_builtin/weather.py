@@ -44,6 +44,8 @@ def scene_for(word):
         return "rain"
     if word in WET:
         return word
+    if word in ("cloudy", "fog"):
+        return "cloud"
     return "sun"
 
 

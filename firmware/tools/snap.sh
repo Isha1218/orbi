@@ -6,7 +6,9 @@ here="$(cd "$(dirname "$0")" && pwd)"
 script="$(cd "$(dirname "$1")" && pwd)/$(basename "$1")"
 out="${2:-.}"
 mkdir -p "$out"
-cc -std=c99 -O2 -Wall -Wextra -o "$out/snap" "$here/snap.c" "$here/../eye.c" "$here/../protocol.c" -lm
+src="$here/.."
+cc -std=c99 -O2 -Wall -Wextra -o "$out/snap" "$here/snap.c" "$src/eye.c" "$src/protocol.c" "$src/text.c" \
+  "$src/sprites.c" "$src/scenes.c" "$src/weather.c" "$src/cards.c" -lm
 cd "$out"
 ./snap < "$script"
 for f in *.ppm; do
